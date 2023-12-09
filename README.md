@@ -19,18 +19,12 @@ To build and run this project you need to have the following installed on your s
   - Note that `rustfmt`, which is part of the default Rust installation, is a build-time requirement.
 - PostgreSQL – [PostgreSQL Downloads](https://www.postgresql.org/download/)
 - IPFS – [Installing IPFS](https://docs.ipfs.io/install/)
-- Profobuf Compiler - [Installing Protobuf](https://grpc.io/docs/protoc-installation/)
 
 For Ethereum network data, you can either run your own Ethereum node or use an Ethereum node provider of your choice.
 
 **Minimum Hardware Requirements:**
 
 - To build graph-node with `cargo`, 8GB RAM are required.
-
-### Docker
-
-The easiest way to run a Graph Node is to use the official Docker compose setup. This will start a Postgres database, IPFS node, and Graph Node.
-[Follow the instructions here](./docker/README.md).
 
 ### Running a Local Graph Node
 
@@ -42,7 +36,7 @@ This is a quick example to show a working Graph Node. It is a [subgraph for Grav
    - `sudo apt-get install -y clang libpq-dev libssl-dev pkg-config`
 4. In the terminal, clone https://github.com/graphprotocol/example-subgraph, and install dependencies and generate types for contract ABIs:
 
-```
+```sh
 yarn
 yarn codegen
 ```
@@ -51,10 +45,10 @@ yarn codegen
 
 Once you have all the dependencies set up, you can run the following:
 
-```
+```sh
 cargo run -p graph-node --release -- \
-  --postgres-url postgresql://USERNAME[:PASSWORD]@localhost:5432/graph-node \
-  --ethereum-rpc NETWORK_NAME:[CAPABILITIES]:URL \
+  --postgres-url postgresql://graph-node[:let-me-in]@localhost:5432/graph-node \
+  --ethereum-rpc NETWORK_NAME:[goerli]:https://goerli.infura.io/v3/782829b3c36a470fac8ad2da2286d41f \
   --ipfs 127.0.0.1:5001
 ```
 
@@ -63,7 +57,7 @@ the connection string, check the [Postgres
 documentation](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
 `graph-node` uses a few Postgres extensions. If the Postgres user with which
 you run `graph-node` is a superuser, `graph-node` will enable these
-extensions when it initializes the database. If the Postgres user is not a
+extensions when it initalizes the database. If the Postgres user is not a
 superuser, you will need to create the extensions manually since only
 superusers are allowed to do that. To create them you need to connect as a
 superuser, which in many installations is the `postgres` user:
@@ -83,17 +77,42 @@ This will also spin up a GraphiQL interface at `http://127.0.0.1:8000/`.
 
 6.  With this Gravatar example, to get the subgraph working locally run:
 
-```
+```sh
 yarn create-local
 ```
 
 Then you can deploy the subgraph:
 
-```
+```sh
 yarn deploy-local
 ```
 
 This will build and deploy the subgraph to the Graph Node. It should start indexing the subgraph immediately.
+
+### Running a Local Graph Node in Docker
+
+- start your local docker daemon
+- cd `./docker`
+- in the `docker-compose.yml` file modify:
+    * line 4 to select a different version of the graph node by replacing `latest` with the first seven digits of the  commit from `https://github.com/graphprotocol/graph-node/releases`
+    * line 22 to provide a blockchain node, e.g.
+
+```docker
+      ethereum: 'mainnet:https://nodeapi.energi.network/rpc' // Energi Mainnet
+      ethereum: 'testnet:https://nodeapi.test.energi.network/rpc' // Energi Testnet
+      ethereum: 'mainnet:https://ether.energi.network/rpc' // Ethereum Mainnet
+      ethereum: 'testnet:https://rinkeby.energi.network/rpc' // Rinkeby Testnet
+```
+
+Make sure no other instance of IPFS or postgreSQL is running on your machine. To start the graph node, IPFS and postgreSQL daemons run:
+```bash
+docker-compose up -d
+```
+
+To stop and remove the containers from docker run:
+```bash
+docker-compose down && rm -rf ./data
+```
 
 ### Command-Line Interface
 
@@ -116,16 +135,16 @@ OPTIONS:
 
         --elasticsearch-user <USER>                   User to use for Elasticsearch logging [env: ELASTICSEARCH_USER=]
         --ethereum-ipc <NETWORK_NAME:[CAPABILITIES]:FILE>
-            Ethereum network name (e.g. 'mainnet'), optional comma-separated capabilities (eg full,archive), and an Ethereum IPC pipe, separated by a ':'
+            Ethereum network name (e.g. 'mainnet'), optional comma-seperated capabilities (eg full,archive), and an Ethereum IPC pipe, separated by a ':'
 
         --ethereum-polling-interval <MILLISECONDS>
             How often to poll the Ethereum node for new blocks [env: ETHEREUM_POLLING_INTERVAL=]  [default: 500]
 
         --ethereum-rpc <NETWORK_NAME:[CAPABILITIES]:URL>
-            Ethereum network name (e.g. 'mainnet'), optional comma-separated capabilities (eg 'full,archive'), and an Ethereum RPC URL, separated by a ':'
+            Ethereum network name (e.g. 'mainnet'), optional comma-seperated capabilities (eg 'full,archive'), and an Ethereum RPC URL, separated by a ':'
 
         --ethereum-ws <NETWORK_NAME:[CAPABILITIES]:URL>
-            Ethereum network name (e.g. 'mainnet'), optional comma-separated capabilities (eg `full,archive), and an Ethereum WebSocket URL, separated by a ':'
+            Ethereum network name (e.g. 'mainnet'), optional comma-seperated capabilities (eg `full,archive), and an Ethereum WebSocket URL, separated by a ':'
 
         --node-id <NODE_ID>
             A unique identifier for this node instance. Should have the same value between consecutive node restarts [default: default]
@@ -203,3 +222,4 @@ Copyright &copy; 2018-2019 Graph Protocol, Inc. and contributors.
 The Graph is dual-licensed under the [MIT license](LICENSE-MIT) and the [Apache License, Version 2.0](LICENSE-APACHE).
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expressed or implied. See the License for the specific language governing permissions and limitations under the License.
+
